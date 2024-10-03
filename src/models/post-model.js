@@ -1,35 +1,21 @@
 import { Schema, model } from "mongoose";
-import bcrypt from "bcrypt";
 
-const userSchema = new Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
+const postSchema = new Schema({
+  text: {
+    type: Schema.Types.String,
+    required: true
   },
-  password: {
-    type: String,
-    required: true,
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: "User"
   },
-  nickname: {
-    type: String,
-    required: false,
-  },
-  role: {
-    type: String,
-    enum: ["USER", "ADMINISTRATOR"],
-    default: "USER",
-  },
-});
+},
+{
+  timestamps: true,
+}
+);
 
-userSchema.pre("save", async function () {
-  this.password = await bcrypt.hash(this.password, 10);
-});
 
-userSchema.methods.isValidPassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
-};  
+const Post = model("Post", postSchema);
 
-const User = model("User", userSchema);
-
-export default User;
+export default Post;

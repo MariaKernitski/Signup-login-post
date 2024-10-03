@@ -1,54 +1,84 @@
-import post from "../models/post-model.js";
+import Post from "../models/post-model.js";
 
-const store = async (req, res) => {
+export const store = async (req, res) => {
   try {
-    await post.create(req.body);
-    res.json();
+    const { text } = req.body;
+    const user = req.user._id;
+
+    const content = await Post.create({
+      text,
+      user,
+    });
+
+    res.status(201).json(content);
   } catch (error) {
-    res.status(400).json(error);
+    res.status(500).send(error.message);
   }
 };
 
-const index = async (req, res) => {
-    try {
-        const content = await post.find(req.query).exec()
-        res.json(content);
-    } catch (error) {
-        res.status(400).json(error);
-    }
-}
+export const index = async (req, res) => {
+  try {
 
-const show = async (req, res) => {
-    try {
-        const content = await post.findById(req.params.id).exec()
-        res.json(content);
-    } catch (error) {
-        res.status(400).json(error);
+    const filter = {
+      user: 
     }
-}
 
-const update = async (req, res) => {
-    try {
-        await post.findByIdAndUpdate(req.params.id).exec()
-        res.json();
-    } catch (error) {
-        res.status(400).json(error);
+    const content = await Post.find().exec();
+
+    res.json(content);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+export const show = async (req, res) => {
+  try {
+    const content = await Post.findById(req.params.id).exec();
+
+    res.json(content);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+export const update = async (req, res) => {
+  try {
+    const user = req.user._id;
+    const { text } = req.body;
+
+    const content = await Post.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        user,
+      },
+      { text }
+    ).exec();
+
+    if (content) {
+      res.json(content);
+    } else {
+      res.sendStatus(403);
     }
-}
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
 
-const destroy = async (req, res) => {
-    try {
-        await post.findByIdAndDelete(req.params.id).exec()
-        res.json();
-    } catch (error) {
-        res.status(400).json(error);
+export const destroy = async (req, res) => {
+  try {
+    const user = req.user._id;
+
+    const content = await Post.findOneAndDelete({
+      _id: req.params.id,
+      user,
+    }).exec();
+
+    if (content) {
+      res.json(content);
+    } else {
+      res.sendStatus(403);
     }
-}
-
-export default {
-    store,
-    index,
-    show,
-    update,
-    destroy
-}
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};

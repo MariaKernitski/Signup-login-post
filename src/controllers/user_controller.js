@@ -1,37 +1,95 @@
 import User from "../models/user-model.js";
-import jwtService from "../services/jwt-service.js";
+import {generateToken} from "../services/jwt-service.js";
 
 export const signup = async (req, res) => {
   try {
-    const user = await User.create({
-      email: req.body.email,
-      password: req.body.password,
-      nickname: req.body.nickname,
-    });
+    const {email, password} = req.body;
 
-    const token = jwtService.generateAccessToken(user);
+    const user = await User.create({email, password});
 
-    res.status(201).json(token);
-  } catch (error) {
-    res.status(400).send(error);
+    const token = generateToken(user);
+
+    res.status(201).json({token});
   }
+  catch(error) {
+    res.status(500).send(error.message);
+  } 
 };
 
 export const login = async (req, res) => {
   try {
-    const user = await User.findOne({
-      email: req.body.email,
-    }).exec();
+    const {email, password} = req.body
 
-    if (user && (await user.isValidPassword(req.body.password))) {
-      const token = jwtService.generateAccessToken(user);
-      res.json(token);
-    } else {
-      res.status(404).json({
-        error: "Email or password incorrect",
-      });
+    const user = await User.findOne({email});
+
+    if (user && (await user.isValidPassword(password))) {
+      const token = generateToken(user);
+
+      res.json({token});
     }
+    else {
+      res.sendStatus(404);
+    }
+  }
+  catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+import Post from "../models/post-model.js";
+
+export const store = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const user = req.user._id;
+
+    const content = await Post.create({
+      text,
+      user,
+    });
+
+    res.status(201).json(content);
   } catch (error) {
-    res.status(400).send(error.message);
+    res.status(500).send(error.message);
+  }
+};
+
+export const index = async (req, res) => {
+  try {
+    const content = await Post.find().exec();
+
+    res.json(content);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+export const show = async (req, res) => {
+  try {
+    const content = await Post.findById(req.params.id).exec();
+    res.json(content);
+  } 
+  catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+export const update = async (req, res) => {
+  try {
+    const content = await Post.findByIdAndUpdate({_id: req.params.id, user,}).exec();
+    res.json(content);
+  } 
+  catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+export const destroy = async (req, res) => {
+  try {
+    const content = await Post.findByIdAndDelete({_id: req.params.id,user,}).exec();
+    res.json(content);
+  
+  } catch (error) {
+    res.status(500).send(error.message);
   }
 };
